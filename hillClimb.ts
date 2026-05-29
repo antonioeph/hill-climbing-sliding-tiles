@@ -28,12 +28,16 @@ let final_state_key = JSON.stringify(final_state);
 interface child_info {
     parent: string | null;
     mov:string;
+    distance: number;
+    goal_path:boolean;
 }
 
 let states_parents: Record<string,child_info> = {
     [initial_state_parent]: {
         parent: null,
-        mov: ""
+        mov: "",
+        distance: 0,
+        goal_path:true
     },
 }
 
@@ -137,7 +141,7 @@ let op_horizontal = (state: number[][], mov: number): number => {
     return mov_valido;
 }
 
-let register_child = (child: number[][], parent_: number [][], mov: string) =>{
+let register_child = (child: number[][], parent_: number [][], mov: string,d: number) =>{
     const key_child: string = JSON.stringify(child);;
     let parent_child: string | null = JSON.stringify(parent_);
 
@@ -147,7 +151,9 @@ let register_child = (child: number[][], parent_: number [][], mov: string) =>{
 
         const newChild: child_info = {
             parent: parent_child,
-            mov: mov
+            mov: mov,
+            distance: d,
+            goal_path:false
         };
 
         states_parents[key_child] = newChild;
@@ -166,7 +172,7 @@ let child_states = (state: number[][]) =>{
     if (op_horizontal(new_child,0) == 1 && seen_state(new_child) == 0){
         distance_child = distance_goal(new_child);
 
-        register_child(new_child,state_copy,"L");
+        register_child(new_child,state_copy,"L",distance_child);
         /* console.log(new_child);
         console.log("distancia para izq:"+distance_child); */
         order(new_child,distance_child);
@@ -188,7 +194,7 @@ let child_states = (state: number[][]) =>{
         distance_child = distance_goal(new_child);
         /* console.log(new_child);
         console.log("distancia para izq:"+distance_child); */
-        register_child(new_child,state_copy,"R");
+        register_child(new_child,state_copy,"R",distance_child);
 
         order(new_child,distance_child);
     }
@@ -201,7 +207,7 @@ let child_states = (state: number[][]) =>{
         /* console.log("movimiento arr:");
         console.log(new_child); */
         distance_child = distance_goal(new_child);
-        register_child(new_child,state_copy,"U");
+        register_child(new_child,state_copy,"U",distance_child);
         /* console.log(new_child);
         console.log("distancia para izq:"+distance_child); */
         order(new_child,distance_child);
@@ -216,7 +222,7 @@ let child_states = (state: number[][]) =>{
         /* console.log("movimiento ab:");
         console.log(new_child); */
         distance_child = distance_goal(new_child);
-        register_child(new_child,state_copy,"D");
+        register_child(new_child,state_copy,"D",distance_child);
         /* console.log(new_child);
         console.log("distancia para izq:"+distance_child); */
         order(new_child,distance_child);
@@ -325,7 +331,9 @@ let hillClimbing = () =>{
     states_parents = {
             [initial_state_parent]: {
                 parent: null,
-                mov: ""
+                mov: "",
+                distance:distance_goal(initial_state),
+                goal_path:true
             },
         };
 
@@ -399,6 +407,7 @@ let hillClimbing = () =>{
 
 
     while(child_search_key!== null){
+        states_parents[child_search_key].goal_path = true;
         const currentParent: any = states_parents[child_search_key];
 
         if (!currentParent) break; 
@@ -420,10 +429,11 @@ let hillClimbing = () =>{
     
 }
 
-while(num_movs_goal>100){
+while(num_movs_goal>50){
     hillClimbing();
 }
 
+console.log(states_parents);
 
 
 const end: number = performance.now();
