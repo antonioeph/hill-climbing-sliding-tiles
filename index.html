@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Space Search Hill Climbing: Sliding Puzzle</title>
+  </head>
+  <style>
+    #container {
+    width: 100vw;
+    height: 100vh;
+    }
+
+    #info-panel {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    width: 360px;
+    max-height: 80vh;
+    overflow-y: auto;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 12px;
+    font-family: Arial, sans-serif;
+    font-size: 13px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 10;
+    }
+
+    #info-panel pre {
+    white-space: pre-wrap;
+    word-break: break-word;
+    }
+
+    #run-search,#reset-camera {
+        background-color: black;
+        color: white;
+        border-radius: 8px;
+        border-style:unset;
+        border-color: black;
+        display: inline-block;
+        font-size:medium;
+        padding: 10px;
+        cursor: pointer;
+    }
+
+    #run-search:hover,#reset-camera:hover{
+        background-color: rgba(0, 0, 0, 0.193);
+        color: black;
+    }
+    #container {
+    width: 100vw;
+    height: 90vh;
+    }
+
+    #progress-bar {
+    width: 100%;
+    height: 6px;
+    background: #be0606;
+    overflow: hidden;
+    }
+
+    .progress-hidden {
+    display: none;
+    }
+
+    .progress-fill {
+    width: 40%;
+    height: 100%;
+    background: #6f42c1;
+    animation: progressMove 1s linear infinite;
+    }
+
+    @keyframes progressMove {
+    0% {
+        transform: translateX(-100%);
+    }
+
+    100% {
+        transform: translateX(250%);
+    }
+    }
+  </style>
+  <body style="background: lightgrey">
+    <div id="container" style="width: 800px; height: 600px; background: white"></div>
+    <div id="progress-bar" class="progress-hidden">
+    <div class="progress-fill"></div>
+    </div>
+    <div id="info-panel">
+    <h3>Node Selected</h3>
+    <p>Click on a node to se its info.</p>
+    <p>*<i>Note. After selecting a node, to deselect it just click on any white area.</i></p>
+    </div>
+    <button id="run-search">(Re)Run Search</button>
+    <button id="reset-camera">Reset Vista</button>
+    
+    <!-- script configurado como módulo -->
+    <script type="module" src="./hillClimb.ts"></script>
+  </body>
+</html>

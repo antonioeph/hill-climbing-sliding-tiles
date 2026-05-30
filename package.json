@@ -1,0 +1,13 @@
+{
+  "type": "module",
+  "scripts": {
+    "dev": "vite"
+  },
+  "dependencies": {
+    "graphology": "^0.26.0",
+    "sigma": "^3.0.3"
+  },
+  "devDependencies": {
+    "vite": "^8.0.14"
+  }
+}
