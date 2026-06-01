@@ -13,7 +13,27 @@ import Sigma from "sigma";
 const graph = new Graph({ type: 'directed', multi: true });
 
 const N: number = 3;
-const start: number = performance.now(); // to record starting execution time
+let start: number = performance.now(); // to record starting execution time
+
+let end: number = 0;
+let elapsed: number = 0;
+
+const tilesList = document.querySelectorAll('#changing-state .tile');
+const waitFrame = (): Promise<void> => {
+    return new Promise((resolve) => requestAnimationFrame(() => resolve()));
+};
+
+const mov_board = document.getElementById('mov') as HTMLElement;
+const data_run = document.getElementById('data') as HTMLElement;
+
+const infoPanel = document.getElementById("info-panel") as HTMLElement;
+
+const runSearch = document.getElementById("run-search") as HTMLButtonElement;
+
+const goalPath = document.getElementById("show-goal-path") as HTMLButtonElement;
+
+let visited_states: number = 0;
+let pending_states: number = 0;
 
 const initial_state: number[][] = [
     [0,2,1],
@@ -25,6 +45,8 @@ const final_state: number[][] = [
     [8,0,4],
     [7,6,5]
 ]
+
+let changin_state: number[] = flattenState(initial_state);
 
 // key-string representations of start and final state
 let initial_state_parent = JSON.stringify(initial_state);
@@ -329,7 +351,9 @@ let movs_list: string[] = [];
 let num_movs_goal: number = 200;
 
 
-let hillClimbing = () =>{
+let hillClimbing = async () =>{
+
+    start = performance.now()
 
     let shouldStop = false;
     
@@ -353,13 +377,17 @@ let hillClimbing = () =>{
             visitados: L_seen.length
         });
 
-        let current_state: number[][] = L.shift() as number[][];   
+        let current_state: number[][] = L.shift() as number[][]; 
+        
+        
 
         if(compare_states(current_state,final_state)){
             console.log("encontrado");
             shouldStop = true;
             console.log(current_state);
             found += 1;
+            visited_states = L_seen.length;
+            pending_states = L.length;
             L=[initial_state];
             L_seen=[];
             temp_ordered_states = {} as any;
@@ -434,25 +462,32 @@ let hillClimbing = () =>{
 
     num_movs_goal = movs_list.length;
 
+    end = performance.now();
+    elapsed = ((end - start)/1000)/60;
+
     
     
 }
 
-while(num_movs_goal>50){
-    hillClimbing();
-}
+await hillClimbing();
 
 // graph creation mapping states_parent info
 // using Sigma.js
-const buildGraph = () => {
+
+const buildGraph = async () => {
+    //showChangingStates();
+    graph.clear();
     const allChilds = Object.entries(states_parents);
     let nodes_goal_path: number = 0;
-    
-    allChilds.forEach(([key,value])=> {
 
-
+    for(const [key,value] of allChilds){
         // guard against the null parent of initial state
         if(value.parent){
+
+            changin_state = flattenState(JSON.parse(value.parent));
+            await showChangingStates(value.mov);
+
+
             let color_edge: string = "";
 
             let color_node_final: string = "";
@@ -484,23 +519,71 @@ const buildGraph = () => {
             //connecting parent with children in that "directed" order
             graph.addEdge(value.parent,key,{size:1,label: value.mov,color:color_edge,type:"arrow",forcelabel:true});
 
+            sigmaInstance.scheduleRefresh();
+
+            await waitFrame();
+
         }
         
-
-    });
-
+    }
+    const finalInfo = states_parents[final_state_key];
+    if (finalInfo?.parent) {
+        changin_state = flattenState(JSON.parse(finalInfo.parent));
+        await showChangingStates(finalInfo.mov);
+    }
+    runSearch.disabled= false;
+    
+    /* changin_state = flattenState(final_state);
+    await showChangingStates(); */
     console.log(states_parents);
     console.log("Total de nodos:", graph.order);
     console.log("Total de nodos en goal path:", nodes_goal_path);
     console.log("Total de aristas:", graph.size);
 }
 
-buildGraph();
+let activeGoalPath: boolean = false;
+
+const showGoalPath = (): void => {
+
+    activeGoalPath=!activeGoalPath;
+    
+    graph.forEachEdge(edge => {
+
+        const currColor = graph.getEdgeAttribute(edge,"color");
+
+        if(currColor == "#8a8686") graph.setEdgeAttribute(edge,"color","#8a868600"); 
+        if(currColor == "#8a868600") graph.setEdgeAttribute(edge,"color","#8a8686");
+        
+    })
+
+    sigmaInstance.refresh();
+}
 
 
+function flattenState(state: number[][]): number[] {
+    let flatState: number[] = []; 
+    state.forEach(list =>{
+        list.forEach(num =>{
+            flatState.push(num);
+        });
+    });
+    return flatState;
+}
 
-const end: number = performance.now();
-const elapsed: number = ((end - start)/1000)/60;
+async function showChangingStates (mov: string) {
+    let mov_: string = "";
+    tilesList.forEach((num,index) =>{
+        tilesList[index].textContent = String(changin_state[index]);
+        tilesList[index].classList.toggle('empty',changin_state[index] == 0);
+    })
+    mov_ = (mov == 'U') ? 'Up: ↑': ((mov == 'D')? 'Down: ↓' :((mov == 'L')? 'Left: ←':'Right: →'));
+    mov_board.innerHTML = `${mov_}`;
+    await waitFrame();
+}
+
+
+end = performance.now();
+elapsed = ((end - start)/1000)/60;
 console.log(`Execution time: ${elapsed.toFixed(4)} min`);
 
 //////////////////////////////////////////////////////////////////////
@@ -510,6 +593,7 @@ const container = document.getElementById("container") as HTMLElement;
 let selectedNode: string | null = null;
 let selectedNeighbors = new Set<string>();
 const resetButton = document.getElementById("reset-camera") as HTMLButtonElement;
+
 
 const sigmaInstance = new Sigma(graph,container,{
     renderEdgeLabels: true,
@@ -525,12 +609,37 @@ const sigmaInstance = new Sigma(graph,container,{
 
     hideEdgesOnMove: true,
     hideLabelsOnMove: true,
+    zIndex: true,
 
 });
 
-const infoPanel = document.getElementById("info-panel") as HTMLElement;
+await buildGraph();
+goalPath.disabled = false;
+resetButton.disabled = false;
 
-const runSearch = document.getElementById("run-search") as HTMLButtonElement;
+getRunData();
+
+
+
+
+function getRunData ():void {
+    data_run.innerHTML = `
+        <strong>Total movements:</strong>
+        <pre>${movs_list.length}</pre>
+        <strong>(Real) Execution time:</strong>
+        <pre>${elapsed.toFixed(4)} min</pre>
+        <strong>Search space size</strong>
+        <pre>${graph.order}</pre>
+        <strong>Visited states:</strong>
+        <pre>${visited_states}</pre>
+        <strong>Pending States:</strong>
+        <pre>${pending_states}</pre>
+        <strong>Iterations:</strong>
+        <pre>${iteraciones}</pre>
+        
+        `
+}
+
 
 sigmaInstance.on("clickNode", ({ node }) => {
     const attrs = graph.getNodeAttributes(node);
@@ -611,6 +720,10 @@ sigmaInstance.on("clickStage", () => {
     selectedNode = null;
     selectedNeighbors.clear();
     sigmaInstance.refresh();
+    infoPanel.innerHTML=`
+     <h3>Node Selected</h3>
+        <p>Click on a node to se its info.</p>
+    `;
 });
 
 resetButton.addEventListener("click", () => {
@@ -629,18 +742,37 @@ resetButton.addEventListener("click", () => {
     runSearch.disabled = false;
 });
 
-runSearch.addEventListener("click", () =>{
+runSearch.addEventListener("click", async () =>{
+    data_run.innerHTML = '';
+    goalPath.disabled = true;
+    runSearch.disabled = true;
+    resetButton.disabled = true;
+    changin_state = flattenState(initial_state);
     graph.clear();
     iteraciones = 0;
 
-    hillClimbing();
+    await hillClimbing();
 
-    buildGraph();
+    await buildGraph();
+    goalPath.disabled = false;
+    runSearch.disabled = false;
+    resetButton.disabled = false;
+
+
+    getRunData();
 
     sigmaInstance.scheduleRefresh();
     
 }
 )
+
+goalPath.addEventListener("click", (e: any) =>{
+   let textButton:string = "";
+   showGoalPath();
+   textButton = activeGoalPath ? "All Paths": "Only Goal Path"; 
+   e.currentTarget.textContent = textButton;
+   
+})
 
 sigmaInstance.setSetting("nodeReducer", (node, data) => {
     if (!selectedNode) return data;

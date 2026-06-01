@@ -3,19 +3,49 @@
   <head>
     <meta charset="UTF-8" />
     <title>Space Search Hill Climbing: Sliding Puzzle</title>
-  </head>
-  <style>
-    #container {
-    width: 100vw;
-    height: 100vh;
+    <style>
+    .top{
+      width: 100%;
+    }
+    h1 {
+      font-size: 2rem;
+      color: #111111;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #565656;         
+    }
+    .outer-container{
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 2px;
     }
 
-    #info-panel {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    width: 360px;
-    max-height: 80vh;
+    
+    #container {
+    width: 100%;
+    height: 65vh;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    }
+
+    .canvas-section {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .controls {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+    #info-panel,#info-panel-global {
+    padding: 2px;
+    /* top: 20px;
+    right: 20px; */
+    width: 100%;
+    height: 65vh;
     overflow-y: auto;
     background: white;
     border: 1px solid #ccc;
@@ -27,12 +57,40 @@
     z-index: 10;
     }
 
+    #info-panel-global {
+        display: flex;
+        flex-direction: column;
+        gap: 20px; 
+      }
+
     #info-panel pre {
     white-space: pre-wrap;
     word-break: break-word;
     }
 
-    #run-search,#reset-camera {
+    #data,#states{
+      justify-content: space-around; 
+      align-items: center;
+      justify-content: center;
+      align-content: center;
+      
+    }
+
+    #initial-goal{
+      display: flex;
+      flex-direction:row;
+      gap: 0px; 
+      justify-content: space-around;
+    }
+
+    @media (min-width: 768px) {
+      .outer-container { flex-direction: row; }
+      .canvas-section { width: 60%; }
+      #info-panel-global { width: 20%; }
+      #info-panel { width: 18%; }
+    }
+
+    #run-search,#reset-camera,#show-goal-path {
         background-color: black;
         color: white;
         border-radius: 8px;
@@ -43,56 +101,138 @@
         padding: 10px;
         cursor: pointer;
     }
-
-    #run-search:hover,#reset-camera:hover{
+    #run-search:hover,#reset-camera:hover,#show-goal-path:hover{
         background-color: rgba(0, 0, 0, 0.193);
         color: black;
     }
-    #container {
-    width: 100vw;
-    height: 90vh;
+
+    #run-search{
+      background-color: #e70909;
+    }
+    #run-search:hover{
+      background-color: #e7090991;
     }
 
-    #progress-bar {
-    width: 100%;
-    height: 6px;
-    background: #be0606;
-    overflow: hidden;
+    
+
+    #run-search:disabled,#show-goal-path:disabled,#reset-camera:disabled{
+      background-color: #cccccc; 
+      color: #666666;            
+      cursor: not-allowed;       
+      opacity: 0.6;              
+      box-shadow: none;          
     }
 
-    .progress-hidden {
-    display: none;
+
+     .puzzle-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr); 
+      gap: 4px;                              
+      max-width: 140px;
+      width: 50%;     
+      margin: 0 auto;
     }
 
-    .progress-fill {
-    width: 40%;
-    height: 100%;
-    background: #6f42c1;
-    animation: progressMove 1s linear infinite;
+    .tile {
+      background: #000000;
+      color: white;
+      font-weight: bold;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      aspect-ratio: 1;                       
+      border-radius: 4px;
     }
 
-    @keyframes progressMove {
-    0% {
-        transform: translateX(-100%);
+    /* Celda vacía (el cero del puzzle) */
+    .tile.empty {
+      background: #e0e0e0;
+      color: transparent;
     }
-
-    100% {
-        transform: translateX(250%);
-    }
-    }
+   
   </style>
+  </head>
+  
   <body style="background: lightgrey">
-    <div id="container" style="width: 800px; height: 600px; background: white"></div>
-    <div id="progress-bar" class="progress-hidden">
-    <div class="progress-fill"></div>
+    <header class="top"><h1>Hill Climbing Algorithm with Manhattan Distance Heuristic: Sliding Tiles Puzzle</h1></header>
+    <pre>Author: Antonio E.P. Heredia</pre>
+    <div class="outer-container">
+      <div class="canvas-section">
+        <div id="container" style="background: white"></div>
+        <p>*<i>Note. After selecting a node, to deselect it just click on any white area.</i></p>
+        <div class="controls">
+          <button id="run-search" disabled>(Re)Run Search</button>
+          <button id="reset-camera" disabled>Reset Zoom</button>
+          <button id="show-goal-path" disabled>Only Goal Path</button>
+        </div>
+      </div>
+      
+      <div id="info-panel-global">
+        <div id="initial-goal">
+          
+          <div id="initial-state">
+            <h3>Initial State</h3>
+            <div class="puzzle-grid">
+              <div class="tile empty">0</div>
+              <div class="tile">2</div>
+              <div class="tile">1</div>
+              <div class="tile">6</div>
+              <div class="tile">7</div>
+              <div class="tile">4</div>
+              <div class="tile">3</div>
+              <div class="tile">8</div>
+              <div class="tile">5</div>
+            </div>
+          </div>
+          <div id="goal-state">
+            <h3>Goal State</h3>
+            <div class="puzzle-grid">
+              <div class="tile">1</div>
+              <div class="tile">2</div>
+              <div class="tile">3</div>
+              <div class="tile">8</div>
+              <div class="tile empty">0</div>
+              <div class="tile">4</div>
+              <div class="tile">7</div>
+              <div class="tile">6</div>
+              <div class="tile">5</div>
+            </div>
+          </div>
+        </div>
+        <div id="states">
+          <h3>States</h3>
+          
+          <div id="changing-state">
+            <div class="puzzle-grid">
+              <div class="tile empty">0</div>
+              <div class="tile">2</div>
+              <div class="tile">1</div>
+              <div class="tile">6</div>
+              <div class="tile">7</div>
+              <div class="tile">4</div>
+              <div class="tile">3</div>
+              <div class="tile">8</div>
+              <div class="tile">5</div>
+            </div>
+          </div>
+          <p>Movement: <pre id="mov"></pre></p>
+        </div>
+        <div id="data">
+          <h3>Data</h3>
+          
+        </div>
+      </div>
+      <div id="info-panel">
+        <h3>Node Selected</h3>
+        <p>Click on a node to se its info.</p>
+        
+      </div>
     </div>
-    <div id="info-panel">
-    <h3>Node Selected</h3>
-    <p>Click on a node to se its info.</p>
-    <p>*<i>Note. After selecting a node, to deselect it just click on any white area.</i></p>
-    </div>
-    <button id="run-search">(Re)Run Search</button>
-    <button id="reset-camera">Reset Vista</button>
+    
+    
+    
+  
     
     <!-- script configurado como módulo -->
     <script type="module" src="./hillClimb.ts"></script>
