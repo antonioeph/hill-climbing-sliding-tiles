@@ -12,9 +12,9 @@ This is a lax implementation of the Hill Climbing algorithm, for research and st
 ## Graph visualization
 
 ![Space search - Hill Climbing - Sliding tiles puzzle](/assets/img/thumbnail-graph-ui.png "Space Search Generated with Hill Climbing: Sliding Puzzle")
-*Space Search Generated with Hill Climbing: Sliding Puzzle*
+*Search Space Generated with Hill Climbing: Sliding Puzzle*
 
-Space search is shown with a graph representation of all states generated and visited during the search to reach the state goal.
+Search space is shown with a graph representation of all states generated and visited during the search to reach the state goal.
 
 ## Features
 
