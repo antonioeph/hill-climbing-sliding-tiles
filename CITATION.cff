@@ -1,0 +1,11 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+  - family-names: "Pérez Heredia"
+    given-names: "Antonio Enrique"
+    orcid: "https://orcid.org/0009-0008-4581-467X"
+title: "hill-climbing-sliding-tiles"
+version: "0.0.4"
+doi: "10.5281/zenodo.20519118"
+date-released: 2026-06-02
+url: "https://github.com/antonioeph/hill-climbing-sliding-tiles"
